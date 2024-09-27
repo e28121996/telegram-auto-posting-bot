@@ -26,22 +26,23 @@ Proyek ini adalah bot Telegram otomatis yang dirancang untuk mengirim pesan ke b
    cd telegram-auto-posting-bot
    ```
 
-2. Buat lingkungan virtual dan aktifkan:
-   ```
+2. Buat dan aktifkan lingkungan virtual:
+   ```bash
    # Buat lingkungan virtual
    python -m venv venv
 
    # Aktifkan lingkungan virtual
-   # Untuk macOS dan Linux:
+   # Untuk Unix atau MacOS:
    source venv/bin/activate
 
    # Untuk Windows:
-   # Pada Command Prompt:
+   # Command Prompt:
    venv\Scripts\activate.bat
-   # Pada PowerShell:
+   # PowerShell:
    venv\Scripts\Activate.ps1
    ```
-   ```
+
+   Catatan: Pastikan untuk menjalankan perintah yang sesuai dengan sistem operasi Anda.
 
 3. Instal dependensi yang diperlukan:
    ```
