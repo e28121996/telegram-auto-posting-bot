@@ -2,6 +2,8 @@
 
 Proyek ini adalah bot Telegram otomatis yang dirancang untuk mengirim pesan ke beberapa grup Telegram secara efisien dan aman, dengan mematuhi batasan dan aturan platform untuk menghindari penandaan sebagai spam.
 
+**CATATAN PENTING: Proyek ini ditujukan untuk penggunaan pribadi dan terbatas. Harap gunakan dengan bertanggung jawab dan sesuai dengan Ketentuan Layanan Telegram.**
+
 ## Fitur
 
 - Struktur modular untuk pemeliharaan dan integrasi fitur yang mudah
@@ -20,14 +22,25 @@ Proyek ini adalah bot Telegram otomatis yang dirancang untuk mengirim pesan ke b
 
 1. Klon repositori:
    ```
-   git clone https://github.com/username-anda/bot-auto-posting-telegram.git
-   cd bot-auto-posting-telegram
+   git clone https://github.com/e28121996/telegram-auto-posting-bot.git
+   cd telegram-auto-posting-bot
    ```
 
 2. Buat lingkungan virtual dan aktifkan:
    ```
+   # Buat lingkungan virtual
    python -m venv venv
-   source venv/bin/activate  # Pada Windows, gunakan `venv\Scripts\activate`
+
+   # Aktifkan lingkungan virtual
+   # Untuk macOS dan Linux:
+   source venv/bin/activate
+
+   # Untuk Windows:
+   # Pada Command Prompt:
+   venv\Scripts\activate.bat
+   # Pada PowerShell:
+   venv\Scripts\Activate.ps1
+   ```
    ```
 
 3. Instal dependensi yang diperlukan:
@@ -45,9 +58,12 @@ Proyek ini adalah bot Telegram otomatis yang dirancang untuk mengirim pesan ke b
 
 5. Konfigurasikan file `config.yaml` sesuai dengan pengaturan yang Anda inginkan.
 
-6. Tambahkan grup Anda ke `data/groups.txt` dan grup yang di-blacklist ke `data/blacklist.txt`.
-
-7. Tambahkan template pesan Anda ke `data/pesan1.txt`, `data/pesan2.txt`, dst.
+6. Siapkan folder `data/`:
+   - Baca `data/README.md` untuk instruksi detail.
+   - Buat file-file berikut berdasarkan contoh yang disediakan:
+     - `groups.txt` (lihat `groups.example.txt`)
+     - `blacklist.txt` (lihat `blacklist.example.txt`)
+     - `pesan1.txt`, `pesan2.txt`, dst. (lihat `pesan1.example.txt`)
 
 ## Penggunaan
 
@@ -61,9 +77,15 @@ python main.py
 
 Untuk informasi lebih detail tentang arsitektur, modul, dan fungsi-fungsi utama, silakan lihat [Dokumentasi Teknis](DOCUMENTATION.md).
 
+## Keamanan dan Privasi
+
+- File-file dalam folder `data/` mengandung informasi sensitif dan tidak di-upload ke repositori.
+- Pastikan untuk tidak membagikan atau meng-commit file-file dalam `data/` ke repositori publik.
+- Selalu periksa `.gitignore` untuk memastikan file-file sensitif tidak akan di-track oleh Git.
+
 ## Peringatan
 
-Bot ini menggunakan akun Telegram pribadi. Berhati-hatilah untuk tidak melanggar ketentuan layanan atau kebijakan spam Telegram. Gunakan dengan bertanggung jawab dan atas risiko Anda sendiri.
+Bot ini menggunakan akun Telegram pribadi dan ditujukan untuk penggunaan pribadi atau terbatas. Penggunaan yang tidak bertanggung jawab dapat melanggar Ketentuan Layanan Telegram. Gunakan dengan bijak dan atas risiko Anda sendiri.
 
 ## Lisensi
 

@@ -1,0 +1,3 @@
+Halo semua!
+Ini adalah contoh pesan template.
+Silakan ganti dengan pesan Anda sendiri.

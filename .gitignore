@@ -28,8 +28,11 @@ session.session
 # Configuration files (optional, uncomment if you want to exclude)
 # config.yaml
 
-# Data files (optional, uncomment if you want to exclude)
-data/
+# Ignore contents of data folder
+data/*
+# But keep the README and example files
+!data/README.md
+!data/*.example.txt
 
 # OS generated files
 .DS_Store
