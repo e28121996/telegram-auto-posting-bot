@@ -1,0 +1,36 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environment
+venv/
+.venv/
+env/
+
+# IDE specific files
+.vscode/
+.idea/
+.cursorrules
+
+# Logs
+logs/
+*.log
+
+# Environment variables
+.env
+
+# Telegram session file
+*.session
+*.session-journal
+session.session
+
+# Configuration files (optional, uncomment if you want to exclude)
+# config.yaml
+
+# Data files (optional, uncomment if you want to exclude)
+data/
+
+# OS generated files
+.DS_Store
+Thumbs.db

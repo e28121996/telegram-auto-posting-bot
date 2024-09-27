@@ -1,0 +1,49 @@
+# Telegram API settings
+api_id: ${API_ID}
+api_hash: ${API_HASH}
+phone_number: ${PHONE_NUMBER}
+
+# Notification
+personal_chat_id: ${PERSONAL_CHAT_ID}
+
+# File paths
+data_directory: "data"
+groups_file: "groups.txt"
+blacklist_file: "blacklist.txt"
+message_files:
+  - "pesan1.txt"
+  - "pesan2.txt"
+  - "pesan3.txt"
+  - "pesan4.txt"
+  - "pesan5.txt"
+
+# Logging
+log_directory: "logs"
+log_file: "bot.log"
+log_level: "INFO"
+error_log_file: "bot.log.error"
+
+# Message sending settings
+min_delay: 7
+max_delay: 12
+
+# Scheduler settings
+min_interval: 1.3
+max_interval: 1.5
+
+# Error handling
+max_retries: 3
+retry_delay: 60
+
+# Cache settings
+cache_expiry: 3600
+group_rules_cache_expiry: 3600
+
+# Group rules
+default_max_message_length: 4096
+
+# Performance
+use_cache: true
+
+# Debug
+debug_mode: false
