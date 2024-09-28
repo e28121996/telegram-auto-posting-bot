@@ -3,37 +3,37 @@ __pycache__/
 *.py[cod]
 *$py.class
 
-# Virtual environment
+# Lingkungan virtual
 venv/
 .venv/
 env/
 
-# IDE specific files
+# File spesifik IDE
 .vscode/
 .idea/
 .cursorrules
 
-# Logs
+# Log
 logs/
 *.log
 
-# Environment variables
+# Variabel lingkungan
 .env
 
-# Telegram session file
+# File sesi Telegram
 *.session
 *.session-journal
 session.session
 
-# Configuration files (optional, uncomment if you want to exclude)
+# File konfigurasi (opsional, hapus komentar jika ingin mengecualikan)
 # config.yaml
 
-# Ignore contents of data folder
+# Abaikan isi folder data
 data/*
-# But keep the README and example files
+# Tetapi simpan README dan file contoh
 !data/README.md
 !data/*.example.txt
 
-# OS generated files
+# File yang dihasilkan oleh sistem operasi
 .DS_Store
 Thumbs.db
