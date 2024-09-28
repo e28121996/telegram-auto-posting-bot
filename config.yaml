@@ -1,49 +1,49 @@
-# Telegram API settings
-api_id: ${API_ID}
-api_hash: ${API_HASH}
-phone_number: ${PHONE_NUMBER}
+# Pengaturan API Telegram
+api_id: ${API_ID}  # ID API Telegram
+api_hash: ${API_HASH}  # Hash API Telegram
+phone_number: ${PHONE_NUMBER}  # Nomor telepon yang terdaftar
 
-# Notification
-personal_chat_id: ${PERSONAL_CHAT_ID}
+# Notifikasi
+personal_chat_id: ${PERSONAL_CHAT_ID}  # ID chat pribadi untuk notifikasi
 
-# File paths
-data_directory: "data"
-groups_file: "groups.txt"
-blacklist_file: "blacklist.txt"
-message_files:
+# Jalur file
+data_directory: "data"  # Direktori untuk menyimpan data
+groups_file: "groups.txt"  # File daftar grup
+blacklist_file: "blacklist.txt"  # File daftar hitam
+message_files:  # Daftar file pesan yang akan digunakan
   - "pesan1.txt"
   - "pesan2.txt"
   - "pesan3.txt"
   - "pesan4.txt"
   - "pesan5.txt"
 
-# Logging
-log_directory: "logs"
-log_file: "bot.log"
-log_level: "INFO"
-error_log_file: "bot.log.error"
+# Pengaturan logging
+log_directory: "logs"  # Direktori untuk menyimpan log
+log_file: "bot.log"  # File log utama
+log_level: "INFO"  # Level logging (INFO, DEBUG, ERROR, dll.)
+error_log_file: "bot.log.error"  # File log khusus untuk error
 
-# Message sending settings
-min_delay: 7
-max_delay: 12
+# Pengaturan pengiriman pesan
+min_delay: 7  # Jeda minimum antara pengiriman pesan (dalam detik)
+max_delay: 12  # Jeda maksimum antara pengiriman pesan (dalam detik)
 
-# Scheduler settings
-min_interval: 1.3
-max_interval: 1.5
+# Pengaturan penjadwal
+min_interval: 1.3  # Interval minimum untuk penjadwalan (dalam jam)
+max_interval: 1.5  # Interval maksimum untuk penjadwalan (dalam jam)
 
-# Error handling
-max_retries: 3
-retry_delay: 60
+# Penanganan kesalahan
+max_retries: 3  # Jumlah maksimum percobaan ulang saat terjadi kesalahan
+retry_delay: 60  # Jeda antara percobaan ulang (dalam detik)
 
-# Cache settings
-cache_expiry: 3600
-group_rules_cache_expiry: 3600
+# Pengaturan cache
+cache_expiry: 3600  # Waktu kedaluwarsa cache umum (dalam detik)
+group_rules_cache_expiry: 3600  # Waktu kedaluwarsa cache aturan grup (dalam detik)
 
-# Group rules
-default_max_message_length: 4096
+# Aturan grup
+default_max_message_length: 4096  # Panjang maksimum pesan default (dalam karakter)
 
-# Performance
-use_cache: true
+# Kinerja
+use_cache: true  # Mengaktifkan penggunaan cache untuk meningkatkan kinerja
 
 # Debug
-debug_mode: false
+debug_mode: false  # Mode debug untuk membantu pengembangan dan pemecahan masalah

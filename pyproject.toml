@@ -5,20 +5,20 @@ target-version = "py38"
 # Mengatur panjang baris maksimum sesuai dengan Black
 line-length = 88
 
-# Mengaktifkan semua aturan yang relevan dengan proyek Anda
+# Mengaktifkan semua aturan yang relevan dengan proyek ini
 select = [
-    "E",   # pycodestyle errors
-    "W",   # pycodestyle warnings
+    "E",   # Kesalahan pycodestyle
+    "W",   # Peringatan pycodestyle
     "F",   # pyflakes
     "I",   # isort
     "C",   # flake8-comprehensions
     "B",   # flake8-bugbear
-    "S",   # flake8-bandit (security)
+    "S",   # flake8-bandit (keamanan)
     "ANN", # flake8-annotations
     "N",   # pep8-naming
     "D",   # pydocstyle
     "UP",  # pyupgrade
-    "RUF", # Ruff-specific rules
+    "RUF", # Aturan khusus Ruff
     "PT",  # flake8-pytest-style
     "SIM", # flake8-simplify
     "TCH", # flake8-type-checking
@@ -26,18 +26,18 @@ select = [
     "ERA", # eradicate
 ]
 
-# Mengabaikan beberapa aturan yang mungkin terlalu ketat untuk proyek Anda
+# Mengabaikan beberapa aturan yang mungkin terlalu ketat untuk proyek ini
 ignore = [
-    "D203",  # 1 blank line required before class docstring
-    "D212",  # Multi-line docstring summary should start at the first line
-    "ANN101",  # Missing type annotation for self in method
-    "ANN102",  # Missing type annotation for cls in classmethod
+    "D203",  # 1 baris kosong diperlukan sebelum docstring kelas
+    "D212",  # Ringkasan docstring multi-baris harus dimulai pada baris pertama
+    "ANN101",  # Anotasi tipe yang hilang untuk self dalam metode
+    "ANN102",  # Anotasi tipe yang hilang untuk cls dalam classmethod
 ]
 
 # Mengabaikan beberapa aturan untuk file tertentu
 [tool.ruff.per-file-ignores]
-"__init__.py" = ["F401"]  # Unused imports in __init__.py
-"tests/*" = ["S101"]  # Allow assert in tests
+"__init__.py" = ["F401"]  # Mengizinkan impor yang tidak digunakan di __init__.py
+"tests/*" = ["S101"]  # Mengizinkan penggunaan assert dalam tes
 
 # Konfigurasi untuk pydocstyle
 [tool.ruff.pydocstyle]
@@ -64,7 +64,7 @@ extend-immutable-calls = ["pydantic.Field"]
 
 # Konfigurasi untuk pyupgrade
 [tool.ruff.pyupgrade]
-# Gunakan sintaks walrus operator (Python 3.8+)
+# Menggunakan sintaks walrus operator (Python 3.8+)
 keep-runtime-typing = true
 
 # Konfigurasi untuk flake8-bandit (keamanan)

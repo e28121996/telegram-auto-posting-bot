@@ -1,4 +1,4 @@
-"""Logging module for the Telegram auto-posting bot."""
+"""Modul logging untuk bot auto-posting Telegram."""
 
 import logging
 import os
@@ -8,7 +8,16 @@ from src.config import yaml_config
 
 
 def setup_logger(name: str, level: int = logging.INFO) -> logging.Logger:
-    """Set up and configure a logger."""
+    """
+    Menyiapkan dan mengkonfigurasi logger.
+
+    Args:
+        name (str): Nama logger.
+        level (int): Level logging. Default ke logging.INFO.
+
+    Returns:
+        logging.Logger: Logger yang telah dikonfigurasi.
+    """
     logger = logging.getLogger(name)
     logger.setLevel(level)
 
@@ -40,4 +49,7 @@ def setup_logger(name: str, level: int = logging.INFO) -> logging.Logger:
     return logger
 
 
-logger = setup_logger("bot_logger", getattr(logging, yaml_config["log_level"]))
+# Inisialisasi logger global
+logger: logging.Logger = setup_logger(
+    "bot_logger", getattr(logging, yaml_config["log_level"])
+)

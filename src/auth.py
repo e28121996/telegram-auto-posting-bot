@@ -1,4 +1,4 @@
-"""Authentication module for the Telegram auto-posting bot."""
+"""Modul autentikasi untuk bot auto-posting Telegram."""
 
 from telethon import TelegramClient
 from telethon.errors import SessionPasswordNeededError
@@ -8,31 +8,40 @@ from src.logger import logger
 
 
 async def create_client() -> TelegramClient:
-    """Create and authenticate a Telegram client."""
+    """
+    Membuat dan mengautentikasi klien Telegram.
+
+    Returns:
+        TelegramClient: Klien Telegram yang telah diautentikasi.
+
+    Raises:
+        Exception: Jika autentikasi gagal.
+    """
     client = TelegramClient("session", config.api_id, config.api_hash)
 
     try:
         await client.connect()
         logger.info(
-            f"Connecting with API ID: {config.api_id}, Phone: {config.phone_number}"
+            f"Menghubungkan API ID: {config.api_id}, No. Telepon: {config.phone_number}"
         )
 
         if not await client.is_user_authorized():
-            logger.info("User not authorized. Sending code request...")
+            logger.info("Pengguna belum diotorisasi. Mengirim permintaan kode...")
             sent = await client.send_code_request(config.phone_number)
-            logger.info(f"Code request sent: {sent}")
-            code = input("Enter the code you received: ")
+            logger.info(f"Permintaan kode terkirim: {sent}")
+            code = input("Masukkan kode yang Anda terima: ")
             try:
-                logger.info("Attempting to sign in...")
+                logger.info("Mencoba untuk masuk...")
                 await client.sign_in(config.phone_number, code)
             except SessionPasswordNeededError:
+                # Verifikasi dua langkah diaktifkan
                 password = input(
-                    "Two-step verification is enabled. Please enter your password: "
+                    "Verifikasi dua langkah diaktifkan. Masukkan kata sandi Anda: "
                 )
                 await client.sign_in(password=password)
 
-        logger.info("Successfully authenticated with Telegram")
+        logger.info("Berhasil diautentikasi dengan Telegram")
         return client
     except Exception as e:
-        logger.error(f"Authentication failed: {e}")
-        raise
+        logger.error(f"Autentikasi gagal: {e}")
+        raise  # Melempar kembali exception untuk penanganan di tingkat yg lebih tinggi

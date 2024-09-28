@@ -1,4 +1,4 @@
-"""Message management module for the Telegram auto-posting bot."""
+"""Modul manajemen pesan untuk bot auto-posting Telegram."""
 
 import os
 import random
@@ -10,10 +10,10 @@ from src.config import yaml_config
 
 
 class MessageManager:
-    """Manages message templates for the Telegram auto-posting bot."""
+    """Mengelola template pesan untuk bot auto-posting Telegram."""
 
     def __init__(self) -> None:
-        """Initialize the MessageManager with a list of message file paths."""
+        """Inisialisasi MessageManager dengan daftar path file pesan."""
         self.message_files = [
             os.path.join(yaml_config["data_directory"], file)
             for file in yaml_config["message_files"]
@@ -21,7 +21,15 @@ class MessageManager:
         self.last_used_file = None
 
     def load_message(self, file_path: str) -> str:
-        """Load a message from a file, using cache if available."""
+        """
+        Memuat pesan dari file, menggunakan cache jika tersedia.
+
+        Args:
+            file_path (str): Path file pesan yang akan dimuat.
+
+        Returns:
+            str: Isi pesan yang dimuat.
+        """
         cached_message = cache.get(file_path)
         if cached_message and isinstance(cached_message, str):
             return cached_message
@@ -33,7 +41,12 @@ class MessageManager:
         return message
 
     def get_random_message(self) -> str:
-        """Get a random message from the available message files."""
+        """
+        Mendapatkan pesan acak dari file pesan yang tersedia.
+
+        Returns:
+            str: Pesan acak yang dipilih.
+        """
         available_files = [f for f in self.message_files if f != self.last_used_file]
         if not available_files:
             available_files = self.message_files
@@ -43,7 +56,15 @@ class MessageManager:
         return self.load_message(random_file)
 
     def get_appropriate_message(self, group_rules: Dict[str, Any]) -> str:
-        """Get an appropriate message based on group rules."""
+        """
+        Mendapatkan pesan yang sesuai berdasarkan aturan grup.
+
+        Args:
+            group_rules (Dict[str, Any]): Aturan grup yang berlaku.
+
+        Returns:
+            str: Pesan yang sesuai dengan aturan grup.
+        """
         message = self.get_random_message()
 
         if group_rules.get("send_messages", False):
@@ -70,4 +91,5 @@ class MessageManager:
         return message
 
 
+# Inisialisasi instance MessageManager global
 message_manager = MessageManager()
