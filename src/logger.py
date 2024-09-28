@@ -2,6 +2,7 @@
 
 import logging
 import os
+import sys
 from logging.handlers import RotatingFileHandler, TimedRotatingFileHandler
 
 from src.config import yaml_config
@@ -20,6 +21,9 @@ def setup_logger(name: str, level: int = logging.INFO) -> logging.Logger:
     """
     logger = logging.getLogger(name)
     logger.setLevel(level)
+
+    # Hapus semua handler yang mungkin sudah ada
+    logger.handlers.clear()
 
     log_dir = yaml_config["log_directory"]
     os.makedirs(log_dir, exist_ok=True)
@@ -45,6 +49,13 @@ def setup_logger(name: str, level: int = logging.INFO) -> logging.Logger:
         logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
     )
     logger.addHandler(error_handler)
+
+    # Menambahkan console handler
+    console_handler = logging.StreamHandler(sys.stdout)
+    console_handler.setFormatter(
+        logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+    )
+    logger.addHandler(console_handler)
 
     return logger
 

@@ -1,13 +1,12 @@
 """Skrip utama untuk bot auto-posting Telegram."""
 
+import inspect
 from typing import Optional
 
 import asyncio
 from telethon import TelegramClient
 
 from src.auth import create_client
-from src.cache import cache
-from src.config import yaml_config
 from src.error_handler import send_critical_error_notification
 from src.group_manager import group_manager
 from src.logger import logger
@@ -34,22 +33,6 @@ async def send_scheduled_messages(client: TelegramClient) -> None:
         logger.error(f"Kesalahan dalam send_scheduled_messages: {e}")
 
 
-async def clear_cache_periodically() -> None:
-    """
-    Membersihkan entri cache yang kedaluwarsa secara berkala.
-
-    Raises:
-        Exception: Jika terjadi kesalahan saat membersihkan cache.
-    """
-    while True:
-        try:
-            await asyncio.sleep(yaml_config["cache_expiry"])
-            cache.clear_expired()
-            logger.info("Entri cache yang kedaluwarsa telah dibersihkan")
-        except Exception as e:
-            logger.error(f"Kesalahan dalam clear_cache_periodically: {e}")
-
-
 async def main() -> None:
     """
     Menjalankan loop utama bot.
@@ -66,10 +49,8 @@ async def main() -> None:
         # Menambahkan tugas pengiriman pesan terjadwal ke scheduler
         scheduler.add_task(lambda: send_scheduled_messages(client))
 
-        # Menjalankan scheduler dan pembersihan cache secara bersamaan
-        await asyncio.gather(
-            scheduler.run(), clear_cache_periodically(), return_exceptions=True
-        )
+        # Menjalankan scheduler
+        await scheduler.run()
     except asyncio.CancelledError:
         logger.info("Bot dihentikan oleh pengguna")
     except Exception as e:
@@ -81,7 +62,9 @@ async def main() -> None:
         if client:
             try:
                 if client.is_connected():
-                    client.disconnect()
+                    disconnect_method = client.disconnect()
+                    if inspect.isawaitable(disconnect_method):
+                        await disconnect_method
                     logger.info("Client terputus")
             except Exception as e:
                 logger.error(f"Kesalahan saat memutuskan koneksi client: {e}")
