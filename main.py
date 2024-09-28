@@ -1,6 +1,5 @@
 """Skrip utama untuk bot auto-posting Telegram."""
 
-import contextlib
 from typing import Optional
 
 import asyncio
@@ -68,24 +67,28 @@ async def main() -> None:
         scheduler.add_task(lambda: send_scheduled_messages(client))
 
         # Menjalankan scheduler dan pembersihan cache secara bersamaan
-        await asyncio.gather(scheduler.run(), clear_cache_periodically())
-    except KeyboardInterrupt:
+        await asyncio.gather(
+            scheduler.run(), clear_cache_periodically(), return_exceptions=True
+        )
+    except asyncio.CancelledError:
         logger.info("Bot dihentikan oleh pengguna")
     except Exception as e:
         error_message = f"Kesalahan tak terduga dalam loop utama: {e}"
         logger.error(error_message)
-        if client:  # Memeriksa apakah client telah diinisialisasi
+        if client:
             await send_critical_error_notification(client, error_message)
-        else:
-            logger.error(
-                "Tidak dapat mengirim notifikasi kesalahan kritis: Client adalah None"
-            )
     finally:
-        if client and client.is_connected():
-            with contextlib.suppress(Exception):
-                await client.disconnect()  # type: ignore
-            logger.info("Client terputus")
+        if client:
+            try:
+                if client.is_connected():
+                    client.disconnect()
+                    logger.info("Client terputus")
+            except Exception as e:
+                logger.error(f"Kesalahan saat memutuskan koneksi client: {e}")
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        logger.info("Program dihentikan oleh pengguna")
