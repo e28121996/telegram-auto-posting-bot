@@ -2,10 +2,9 @@
 
 
 class Database:
-    """Kelas untuk mengelola koneksi dan operasi database."""
+    """Kelas untuk mengelola operasi database."""
 
     def __init__(self: "Database") -> None:
         """Inisialisasi koneksi database atau setup lainnya."""
-        # Inisialisasi koneksi database atau setup lainnya
 
     # Tambahkan metode-metode yang diperlukan untuk interaksi dengan database

@@ -10,21 +10,19 @@ notification:
 
 # Pengaturan File dan Direktori
 directories:
-  data: "data"
-  logs: "logs"
+  data: "./data"
+  logs: "./logs"
 
 files:
-  groups: "groups.txt"
-  blacklist: "blacklist.txt"
-  log: "bot.log"
-  error_log: "bot.log.error"
-  slow_mode: "slow_mode_info.json"
   messages:
     - "pesan1.txt"
     - "pesan2.txt"
     - "pesan3.txt"
     - "pesan4.txt"
     - "pesan5.txt"
+  groups: "groups.txt"
+  blacklist: "blacklist.txt"
+  slow_mode_info: "slow_mode_info.json"
 
 # Pengaturan Logging
 logging:
@@ -32,13 +30,16 @@ logging:
 
 # Pengaturan Pengiriman Pesan
 message_sending:
-  min_delay: 7
-  max_delay: 12
+  min_intra_batch_delay: 1.0
+  max_intra_batch_delay: 3.0
+  batch_size: 4
+  min_inter_batch_delay: 20
+  max_inter_batch_delay: 30
   default_max_length: 4096
 
 # Pengaturan Penjadwalan
 scheduling:
-  min_interval: 1.2
+  min_interval: 1.3
   max_interval: 1.5
 
 # Pengaturan Penanganan Kesalahan
@@ -50,6 +51,11 @@ error_handling:
 cache:
   expiry: 3600
 
+# Pengaturan Umum
+general:
+  timezone: "UTC"
+
 # Pengaturan Debug
 debug:
   enabled: true
+  profiling: true

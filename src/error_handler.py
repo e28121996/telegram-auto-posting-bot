@@ -21,6 +21,8 @@ import asyncio
 from datetime import datetime
 from datetime import timezone
 from typing import TYPE_CHECKING
+from typing import Union
+from typing import cast
 
 from telethon.errors import ChannelPrivateError
 from telethon.errors import ChatAdminRequiredError
@@ -39,7 +41,7 @@ from telethon.errors import UserPrivacyRestrictedError
 from telethon.errors import UserRestrictedError
 
 from src.config import config
-from src.config import get_config
+from src.config import get_config_value
 from src.group_manager import group_manager
 from src.logger import logger
 from src.utils import truncate_message
@@ -49,13 +51,23 @@ if TYPE_CHECKING:
 
 
 def get_int_config(key: str, default: int) -> int:
-    value = get_config(key, default)
-    return int(value) if isinstance(value, (int, float, str)) else default
+    value = get_config_value(key)
+    if value is None:
+        return default
+    try:
+        return int(cast(Union[int, str], value))
+    except ValueError:
+        return default
 
 
 def get_float_config(key: str, default: float) -> float:
-    value = get_config(key, default)
-    return float(value) if isinstance(value, (int, float, str)) else default
+    value = get_config_value(key)
+    if value is None:
+        return default
+    try:
+        return float(cast(Union[float, str], value))
+    except ValueError:
+        return default
 
 
 MAX_RETRIES = get_int_config("max_retries", 3)

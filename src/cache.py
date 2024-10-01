@@ -16,7 +16,7 @@ from typing import TypeVar
 from typing import Union
 from typing import cast
 
-from src.config import get_config as config_get_config  # Rename imported function
+from src.config import get_config_value  # Updated import
 
 T = TypeVar("T")
 
@@ -25,7 +25,7 @@ def get_config(
     key: str, default: Union[float, str, list, dict, None] = None
 ) -> Union[float, str, list, dict, None]:
     """Wrapper function for config_get_config that adds default value handling."""
-    value = config_get_config(key)
+    value = get_config_value(key)
     if isinstance(value, (int, float)):
         return float(value)
     return value if value is not None else default

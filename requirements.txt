@@ -2,3 +2,5 @@ telethon
 pydantic
 pydantic-settings
 PyYAML
+pytz
+python-dotenv

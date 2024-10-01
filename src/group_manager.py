@@ -10,14 +10,19 @@ import asyncio
 import json
 from datetime import datetime
 from datetime import timedelta
-from datetime import timezone
 from pathlib import Path
+from typing import Any
 from typing import Dict
 from typing import List
 
+from telethon import TelegramClient
+
 from src.cache import cache
-from src.config import yaml_config
+from src.config_loader import config as yaml_config
+from src.database import Database
+from src.exceptions import ConfigurationError
 from src.logger import logger
+from src.utils import get_current_utc_time
 
 
 class GroupManager:
@@ -33,96 +38,95 @@ class GroupManager:
     """
 
     __slots__ = (
-        "groups_file",
-        "blacklist_file",
+        "data_dir",
         "slow_mode_file",
         "slow_mode_info",
+        "groups_file",
+        "blacklist_file",
+        "client",
+        "db",
         "slow_mode_loaded",
     )
 
     def __init__(self: "GroupManager") -> None:
         """Inisialisasi GroupManager dengan path file konfigurasi."""
-        self.groups_file = (
-            Path(yaml_config["directories"]["data"]) / yaml_config["files"]["groups"]
-        )
-        self.blacklist_file = (
-            Path(yaml_config["directories"]["data"]) / yaml_config["files"]["blacklist"]
-        )
-        self.slow_mode_file = (
-            Path(yaml_config["directories"]["data"]) / yaml_config["files"]["slow_mode"]
-        )
-        self.slow_mode_info: Dict[str, datetime] = {}
-        self.slow_mode_loaded: bool = False
-        self.load_slow_mode_info()
+        try:
+            self.data_dir = Path(yaml_config["directories"]["data"])
+            self.slow_mode_file = self.data_dir / yaml_config["files"]["slow_mode_info"]
+            self.groups_file = self.data_dir / yaml_config["files"]["groups"]
+            self.blacklist_file = self.data_dir / yaml_config["files"]["blacklist"]
+        except KeyError as e:
+            error_msg = f"Konfigurasi tidak lengkap: {e}"
+            raise ConfigurationError(error_msg) from e
+
+        self.slow_mode_info: Dict[str, str] = {}
+        self.slow_mode_loaded = False
+
+    async def initialize(
+        self: "GroupManager", client: TelegramClient, db: Database
+    ) -> None:
+        """Inisialisasi GroupManager dengan client dan database."""
+        self.client = client
+        self.db = db
+        if not self.slow_mode_loaded:
+            self.load_slow_mode_info()
 
     def load_slow_mode_info(self: "GroupManager") -> None:
         """Memuat informasi slow mode dari file JSON."""
-        if self.slow_mode_loaded:  # Periksa apakah sudah dimuat sebelumnya
-            logger.debug("Informasi slow mode sudah dimuat sebelumnya")
+        if self.slow_mode_loaded:
             return
 
         try:
-            if self.slow_mode_file.exists():
-                with self.slow_mode_file.open("r") as f:
-                    data = json.load(f)
-                    self.slow_mode_info = {
-                        k: datetime.fromisoformat(v) for k, v in data.items()
-                    }
-                logger.info(
-                    f"Berhasil memuat informasi slow mode untuk "
-                    f"{len(self.slow_mode_info)} grup"
-                )
+            cached_info = cache.get("slow_mode_info")
+            if cached_info and isinstance(cached_info, str):
+                self.slow_mode_info = json.loads(cached_info)
             else:
-                logger.info("File informasi slow mode tidak ditemukan. Membuat baru.")
+                with self.slow_mode_file.open("r") as f:
+                    content = f.read().strip()
+                    if content:
+                        loaded_info = json.loads(content)
+                        if isinstance(loaded_info, dict):
+                            self.slow_mode_info = loaded_info
+                        else:
+                            logger.warning(
+                                "Loaded slow mode info is not a dictionary. "
+                                "Using empty dict."
+                            )
+                            self.slow_mode_info = {}
+                    else:
+                        self.slow_mode_info = {}
+                cache.set_value("slow_mode_info", json.dumps(self.slow_mode_info))
 
-            self.slow_mode_loaded = True  # Set flag setelah berhasil memuat
-        except json.JSONDecodeError as e:
-            logger.error(f"Error saat membaca file slow mode: {e}")
-        except OSError as e:
-            logger.error(f"Error I/O saat memuat informasi slow mode: {e}")
-        except ValueError as e:
-            logger.error(f"Error nilai saat memproses data slow mode: {e}")
-        except KeyError as e:
-            logger.error(
-                f"Error kunci tidak ditemukan saat memproses data slow mode: {e}"
+            logger.info(
+                f"Berhasil memuat informasi slow mode untuk "
+                f"{len(self.slow_mode_info)} grup"
             )
-        except (AttributeError, TypeError) as e:
-            logger.error(f"Error tipe data saat memproses informasi slow mode: {e}")
+        except (OSError, json.JSONDecodeError) as e:
+            logger.error(f"Error saat memuat informasi slow mode: {e!s}")
+            self.slow_mode_info = {}
+        finally:
+            self.slow_mode_loaded = True
 
     def save_slow_mode_info(self: "GroupManager") -> None:
         """Menyimpan informasi slow mode ke file JSON."""
         try:
-            data = {k: v.isoformat() for k, v in self.slow_mode_info.items()}
             with self.slow_mode_file.open("w") as f:
-                json.dump(data, f)
-            logger.info(
-                f"Berhasil menyimpan informasi slow mode untuk "
-                f"{len(self.slow_mode_info)} grup"
-            )
+                json.dump(self.slow_mode_info, f)
+            logger.info("Berhasil menyimpan informasi slow mode")
         except OSError as e:
-            logger.error(f"Error I/O saat menyimpan informasi slow mode: {e}")
-        except TypeError as e:
-            logger.error(f"Error tipe data saat menyimpan informasi slow mode: {e}")
-        except ValueError as e:
-            logger.error(f"Error nilai saat menyimpan informasi slow mode: {e}")
-        except (AttributeError, KeyError) as e:
-            logger.error(
-                f"Error atribut atau kunci saat menyimpan informasi slow mode: {e}"
-            )
+            logger.error(f"Gagal menyimpan informasi slow mode: {e}")
 
     async def clean_slow_mode_info(self: "GroupManager") -> None:
         """Membersihkan data slow mode yang sudah tidak relevan."""
-        now = datetime.now(timezone.utc)
+        current_time = get_current_utc_time()
         expired_groups = [
-            group for group, expiry in self.slow_mode_info.items() if now > expiry
+            group
+            for group, expiry_time_str in self.slow_mode_info.items()
+            if datetime.fromisoformat(expiry_time_str) < current_time
         ]
         for group in expired_groups:
             del self.slow_mode_info[group]
-        if expired_groups:
-            logger.info(
-                f"Membersihkan {len(expired_groups)} grup dari informasi slow mode"
-            )
-            self.save_slow_mode_info()
+        self.save_slow_mode_info()
 
     async def load_groups(self: "GroupManager") -> List[str]:
         """Memuat dan me-cache daftar grup dari file.
@@ -217,28 +221,27 @@ class GroupManager:
         self: "GroupManager", group: str, wait_seconds: int
     ) -> None:
         """Memperbarui informasi slow mode untuk grup."""
-        self.slow_mode_info[group] = datetime.now(tz=timezone.utc) + timedelta(
-            seconds=wait_seconds
-        )
+        expiry_time = get_current_utc_time() + timedelta(seconds=wait_seconds)
+        self.slow_mode_info[group] = expiry_time.isoformat()
         self.save_slow_mode_info()
 
     async def is_in_slow_mode(self: "GroupManager", group: str) -> bool:
         """Memeriksa apakah grup masih dalam slow mode."""
-        if group in self.slow_mode_info:
-            if datetime.now(tz=timezone.utc) < self.slow_mode_info[group]:
-                return True
-            del self.slow_mode_info[group]
-            self.save_slow_mode_info()
-        return False
+        if group not in self.slow_mode_info:
+            return False
+        expiry_time = datetime.fromisoformat(self.slow_mode_info[group])
+        return get_current_utc_time() < expiry_time
 
-    async def get_slow_mode_stats(self: "GroupManager") -> Dict[str, int]:
+    async def get_slow_mode_stats(self: "GroupManager") -> Dict[str, Any]:
         """Mendapatkan statistik slow mode untuk semua grup."""
-        stats = {}
-        for group, expiry in self.slow_mode_info.items():
-            remaining_time = (expiry - datetime.now(timezone.utc)).total_seconds()
-            if remaining_time > 0:
-                stats[group] = int(remaining_time)
-        return stats
+        return {
+            "total_groups": len(self.slow_mode_info),
+            "active_groups": sum(
+                1
+                for expiry_time in self.slow_mode_info.values()
+                if datetime.fromisoformat(expiry_time) > get_current_utc_time()
+            ),
+        }
 
     @staticmethod
     async def _read_file(file_path: Path) -> List[str]:

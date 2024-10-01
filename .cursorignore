@@ -1,0 +1,37 @@
+# Ignore everything
+*
+
+# But don't ignore these specific files and directories
+!/.cursorignore
+!/.cursorrules
+!/.env
+!/.gitignore
+!/.pre-commit-config.yaml
+!/DOCUMENTATION.md
+!/README.md
+!/config.yaml
+!/main.py
+!/pyproject.toml
+!/requirements.txt
+
+!/src
+!/src/**
+
+!/data
+!/data/**
+
+!/logs
+!/logs/**
+
+# Ignore common Python cache files that might be in allowed directories
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Ignore common temporary and system files
+*.tmp
+*.bak
+*.swp
+.DS_Store
+Thumbs.db

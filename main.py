@@ -1,64 +1,124 @@
-"""Skrip utama untuk bot auto-posting Telegram.
-
-Modul ini menginisialisasi dan menjalankan bot Telegram untuk auto-posting.
-Ini menangani penjadwalan pesan, pengiriman pesan, dan penanganan kesalahan.
-Modul ini juga mengatur konfigurasi logging dan mengelola siklus hidup klien Telegram.
-"""
+"""Skrip utama untuk bot auto-posting Telegram."""
 
 from __future__ import annotations
 
 import asyncio
-import cProfile
-import io
-import pstats
+import os
 import secrets
-import time
+import signal
+from contextlib import suppress
 from datetime import datetime
 from datetime import timedelta
 from datetime import timezone
+from getpass import getpass
+from typing import Any
+from typing import Dict
+from typing import NoReturn
+from typing import Optional
+from typing import TypedDict
 
+from dotenv import load_dotenv
 from telethon import TelegramClient
 from telethon.errors import RPCError
+from telethon.errors import SessionPasswordNeededError
 
 from src.auth import create_client
-from src.config import (  # Pastikan untuk mengimpor ini dari modul config Anda
-    ConfigError,
-)
-from src.config import get_config  # Pastikan untuk mengimpor ini dari modul config Anda
-from src.database import Database  # Tambahkan import ini
+from src.config import get_config_value
+from src.database import Database
 from src.error_handler import send_critical_error_notification
-from src.group_manager import group_manager
+from src.exceptions import ConfigurationError
+from src.group_manager import GroupManager  # Tambahkan impor ini
 from src.logger import logger
-from src.message_manager import get_message_manager  # Ubah import ini
+from src.message_manager import MessageManagerError
+from src.message_manager import get_message_manager
 from src.message_manager import initialize_message_manager
 from src.message_sender import send_mass_message
 from src.scheduler import scheduler
 
+load_dotenv()
+
+# Inisialisasi group_manager sebagai variabel global
+group_manager = GroupManager()
+
+
+def get_env(key: str, default: Optional[str] = None) -> Optional[str]:
+    """Mengambil nilai dari variabel lingkungan."""
+    value = os.getenv(key, default)
+    if value is None:
+        logger.error(f"Variabel lingkungan {key} tidak ditemukan")
+    return value
+
+
+class ConfigDict(TypedDict):
+    """Struktur konfigurasi untuk bot Telegram."""
+
+    telegram: Dict[str, Any]
+
+
+def raise_config_error(message: str) -> NoReturn:
+    """Raise a ValueError with the given message."""
+    logger.error(message)
+    raise ValueError(message)
+
+
+def validate_config(config: Optional[Dict[str, Any]]) -> None:
+    """Memvalidasi konfigurasi bot."""
+    if not isinstance(config, dict):
+        config_error = "Konfigurasi harus berupa dictionary"
+        raise TypeError(config_error)
+
+    telegram_config = config.get("telegram")
+    if not isinstance(telegram_config, dict):
+        telegram_config_error = "Konfigurasi telegram harus berupa dictionary"
+        raise TypeError(telegram_config_error)
+
+
+def get_safe_config() -> Dict[str, Any]:
+    """Mendapatkan konfigurasi yang aman untuk digunakan."""
+    config = get_config_value()
+    if not isinstance(config, dict):
+        error_message = "Konfigurasi yang dikembalikan bukan dictionary"
+        logger.error(error_message)
+        raise TypeError(error_message)
+
+    required_keys = ["API_ID", "API_HASH", "PHONE_NUMBER"]
+    missing_keys = [key for key in required_keys if not config.get(key)]
+
+    if missing_keys:
+        error_message = (
+            f"Kunci konfigurasi berikut tidak tersedia: {', '.join(missing_keys)}"
+        )
+        logger.error(error_message)
+        raise ValueError(error_message)
+
+    return config
+
 
 async def send_scheduled_messages(client: TelegramClient) -> None:
-    """Mengirim pesan terjadwal ke grup-grup yang valid."""
+    """Mengirim pesan terjadwal ke grup-grup."""
+    message_manager = await get_message_manager()
+    if message_manager is None:
+        logger.error("MessageManager tidak tersedia. Tidak dapat mengirim pesan.")
+        return
+
+    groups = await group_manager.get_valid_groups()
+    if not groups:
+        logger.warning("Tidak ada grup valid untuk mengirim pesan.")
+        return
+
     try:
-        groups = await group_manager.get_valid_groups()
-        message_manager = await get_message_manager()  # Ubah ini
         message = message_manager.get_random_message()
-        logger.info(f"Mengirim pesan terjadwal ke {len(groups)} grup")
-        start_time = time.time()
         await send_mass_message(client, groups, message)
-        end_time = time.time()
-        logger.info(
-            f"Pesan terjadwal berhasil dikirim. "
-            f"Waktu total: {end_time - start_time:.2f}s"
-        )
-    except (OSError, RPCError, ValueError) as e:
-        logger.error(f"Kesalahan dalam send_scheduled_messages: {e}", exc_info=True)
+    except (MessageManagerError, RPCError, ConnectionError) as e:
+        logger.exception(f"Terjadi kesalahan saat mengirim pesan terjadwal: {e}")
 
 
 async def setup_client() -> TelegramClient | None:
     """Menyiapkan dan menginisialisasi client Telegram."""
     try:
         client = await create_client()
-        db = Database()  # Inisialisasi Database
-        await initialize_message_manager(client, db)  # Ubah ini menjadi async
+        db = Database()
+        await initialize_message_manager(client, db)
         valid_groups = await group_manager.get_valid_groups()
         logger.info(f"Jumlah grup valid: {len(valid_groups)}")
         logger.debug(f"Daftar grup valid: {valid_groups}")
@@ -77,25 +137,23 @@ async def run_client(client: TelegramClient | None) -> None:
             "Client bukan instance TelegramClient yang valid, tidak dapat menjalankan"
         )
         return
-
+        return
     try:
-        # Menjalankan send_scheduled_messages segera
         logger.info("Memulai pengiriman pesan terjadwal pertama")
         await send_scheduled_messages(client)
         logger.info("Pengiriman pesan terjadwal pertama selesai")
-
-        # Jadwalkan pengiriman pesan berikutnya
+        logger.info("Pengiriman pesan terjadwal pertama selesai")
         next_run = calculate_next_run()
         logger.info(f"Jadwal pengiriman berikutnya: {next_run}")
-
+        logger.info(f"Jadwal pengiriman berikutnya: {next_run}")
         while True:
             now = datetime.now(timezone.utc)
             if now >= next_run:
                 await send_scheduled_messages(client)
                 next_run = calculate_next_run()
                 logger.info(f"Jadwal pengiriman berikutnya: {next_run}")
-            await asyncio.sleep(60)  # Cek setiap menit
-
+            await asyncio.sleep(60)
+            await asyncio.sleep(60)
     except asyncio.CancelledError:
         logger.info("Bot dihentikan oleh pengguna")
     except (RPCError, ConnectionError, OSError) as e:
@@ -107,8 +165,9 @@ async def run_client(client: TelegramClient | None) -> None:
 
 def calculate_next_run() -> datetime:
     """Menghitung waktu pengiriman berikutnya."""
-    min_interval = get_config("min_interval", 1.3)
-    max_interval = get_config("max_interval", 1.5)
+    config = get_safe_config()
+    min_interval = config.get("scheduling.min_interval") or 1.3
+    max_interval = config.get("scheduling.max_interval") or 1.5
     interval = secrets.SystemRandom().uniform(
         float(min_interval) if isinstance(min_interval, (int, float)) else 1.3,
         float(max_interval) if isinstance(max_interval, (int, float)) else 1.5,
@@ -125,66 +184,98 @@ async def slow_mode_maintenance() -> None:
         await asyncio.sleep(3600)  # Jalankan setiap jam
 
 
-async def main() -> None:
-    """Fungsi utama untuk menjalankan bot."""
-    try:
-        config = get_config("main", {})
-        if not config or not isinstance(config, dict):
-            error_message = "Konfigurasi utama tidak ditemukan atau tidak valid"
-            logger.error(error_message)
-            return  # Keluar dari fungsi main tanpa raise
-
-        api_id = config.get("api_id")
-        api_hash = config.get("api_hash")
-        phone_number = config.get("phone_number")
-
-        if not all([api_id, api_hash, phone_number]):
-            error_message = (
-                "Konfigurasi tidak lengkap. "
-                "Diperlukan api_id, api_hash, dan phone_number."
-            )
-            logger.error(error_message)
-            return  # Keluar dari fungsi main tanpa raise
-
-        client = TelegramClient("user_session", int(api_id or 0), str(api_hash or ""))
-
+async def connect_client(client: TelegramClient, phone_number: str) -> None:
+    """Menghubungkan client ke Telegram dan melakukan otentikasi jika diperlukan."""
+    await client.connect()
+    if await client.is_user_authorized():
+        logger.info("Client berhasil terhubung")
+    else:
+        await client.send_code_request(phone=phone_number)
+        code = input("Masukkan kode: ")
         try:
-            # Gunakan metode start() dengan nomor telepon
-            await client.start(phone=str(phone_number or ""))  # type: ignore[awaitable-type]
+            await client.sign_in(phone=phone_number, code=code)
+        except SessionPasswordNeededError:
+            password = getpass("Two-step verification diaktifkan. Masukkan password: ")
+            await client.sign_in(password=password)
+        logger.info("Client berhasil terhubung")
 
-            db = Database()
+
+async def disconnect_client(client: TelegramClient) -> None:
+    """Memutuskan koneksi client dari Telegram."""
+    if client.is_connected():
+        try:
+            disconnect_result = client.disconnect()
+            if disconnect_result is not None:
+                await disconnect_result
+        except RPCError as e:
+            logger.error(f"Error saat memutuskan koneksi: {e}")
+        logger.info("Client terputus")
+
+
+async def main() -> None:
+    """Fungsi utama untuk menjalankan bot Telegram."""
+    client = None
+    try:
+        config: Dict[str, Any] = get_safe_config()
+        logger.info("Konfigurasi berhasil dimuat")
+        logger.debug(f"Config: {config}")
+
+        # Log direktori data
+        data_dir = config.get("directories", {}).get("data")
+        logger.info(f"Direktori data dari konfigurasi: {data_dir}")
+
+        if not all(
+            [config.get("API_ID"), config.get("API_HASH"), config.get("PHONE_NUMBER")]
+        ):
+            raise_config_error("API_ID, API_HASH, dan PHONE_NUMBER harus diisi")
+
+        client = await create_client()
+        await connect_client(client, config["PHONE_NUMBER"])
+
+        # Inisialisasi database dan group manager
+        db = Database()
+        try:
+            await group_manager.initialize(client, db)
             await initialize_message_manager(client, db)
+        except ConfigurationError as e:
+            logger.error(f"Kesalahan konfigurasi: {e}")
+            return
+        except MessageManagerError as e:
+            logger.warning(f"MessageManager: {e}")
+            # Lanjutkan eksekusi meskipun MessageManager sudah diinisialisasi
 
-            group_manager.load_slow_mode_info()
-            scheduler_task = asyncio.create_task(scheduler.run())
-            client_task = asyncio.create_task(run_client(client))
-            slow_mode_task = asyncio.create_task(slow_mode_maintenance())
+        # Tambahkan logika utama aplikasi di sini
+        stop_event = asyncio.Event()
 
-            await asyncio.gather(scheduler_task, client_task, slow_mode_task)
-        finally:
-            group_manager.save_slow_mode_info()
-            if client.is_connected():
-                disconnect_result = client.disconnect()
-                if asyncio.iscoroutine(disconnect_result):
-                    await disconnect_result
-    except ConfigError as e:
-        logger.error(f"Kesalahan konfigurasi: {e}")
-    except Exception as e:  # noqa: BLE001
-        logger.error(f"Kesalahan tidak terduga: {e}", exc_info=True)
-        return  # Keluar dari fungsi main tanpa raise
+        def signal_handler() -> None:
+            logger.info("Menerima sinyal penghentian. Menghentikan aplikasi...")
+            stop_event.set()
+
+        loop = asyncio.get_running_loop()
+        for sig in (signal.SIGINT, signal.SIGTERM):
+            loop.add_signal_handler(sig, signal_handler)
+
+        async def main_loop() -> None:
+            while not stop_event.is_set():
+                await send_scheduled_messages(client)
+                next_run = (
+                    scheduler.get_next_run_time()
+                )  # Menggunakan metode yang benar
+                logger.info(f"Jadwal pengiriman berikutnya: {next_run}")
+                with suppress(asyncio.TimeoutError):
+                    await asyncio.wait_for(
+                        stop_event.wait(), timeout=scheduler.get_interval()
+                    )  # Menggunakan metode yang benar
+
+        await main_loop()
+
+    except (ValueError, RPCError, ConfigurationError) as e:
+        logger.exception(f"Terjadi kesalahan: {e!s}")
+    finally:
+        if client:
+            await disconnect_client(client)
+        logger.info("Aplikasi dihentikan.")
 
 
 if __name__ == "__main__":
-    profiler = cProfile.Profile()
-    profiler.enable()
-
-    try:
-        asyncio.run(main())
-    except KeyboardInterrupt:
-        logger.info("Program dihentikan oleh pengguna")
-    finally:
-        profiler.disable()
-        s = io.StringIO()
-        ps = pstats.Stats(profiler, stream=s).sort_stats("cumulative")
-        ps.print_stats(20)
-        logger.debug(f"Hasil profiling:\n{s.getvalue()}")
+    asyncio.run(main())

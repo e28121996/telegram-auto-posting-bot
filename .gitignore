@@ -38,3 +38,6 @@ Thumbs.db
 
 # Folder Ruff cache
 .ruff_cache/
+
+# Pre-commit
+.pre-commit-config.yaml

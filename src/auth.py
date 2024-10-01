@@ -5,53 +5,23 @@ yang digunakan oleh bot auto-posting.
 """
 
 from telethon import TelegramClient
-from telethon.errors import SessionPasswordNeededError
 
-from src.config import config
-from src.logger import logger
+from src.config import get_config_value
+from src.exceptions import ConfigurationError
 
 
 async def create_client() -> TelegramClient:
-    """Membuat dan mengautentikasi klien Telegram.
+    """Membuat dan mengembalikan instance TelegramClient."""
+    config = get_config_value()
+    if not config:
+        error_msg = "Konfigurasi tidak tersedia"
+        raise ConfigurationError(error_msg)
 
-    Fungsi ini membuat instance TelegramClient, menghubungkannya ke server Telegram,
-    dan melakukan proses autentikasi jika diperlukan. Jika verifikasi dua langkah
-    diaktifkan, fungsi ini akan meminta input kata sandi dari pengguna.
+    api_id = config.get("API_ID")
+    api_hash = config.get("API_HASH")
 
-    Returns:
-        TelegramClient: Klien Telegram yang telah diautentikasi dan siap digunakan.
+    if not api_id or not api_hash:
+        error_msg = "API_ID atau API_HASH tidak tersedia dalam konfigurasi"
+        raise ConfigurationError(error_msg)
 
-    Raises:
-        Exception: Jika terjadi kesalahan selama proses koneksi atau autentikasi.
-    """
-    client = TelegramClient("session", config.api_id, config.api_hash)
-
-    try:
-        await client.connect()
-        logger.info(
-            f"Menghubungkan API ID: {config.api_id}, "
-            f"No. Telepon: {config.phone_number}",
-        )
-
-        if not await client.is_user_authorized():
-            logger.info("Pengguna belum diautentikasi. Mengirim permintaan kode...")
-            sent = await client.send_code_request(config.phone_number)
-            logger.info(f"Permintaan kode terkirim: {sent}")
-            code = input("Masukkan kode yang Anda terima: ")
-            try:
-                logger.info("Mencoba untuk masuk...")
-                await client.sign_in(config.phone_number, code)
-            except SessionPasswordNeededError:
-                password = input(
-                    "Verifikasi dua langkah diaktifkan. Masukkan kata sandi Anda: ",
-                )
-                await client.sign_in(password=password)
-        else:
-            logger.info("Pengguna sudah diautentikasi")
-
-        logger.info("Berhasil terhubung dengan Telegram")
-    except Exception as e:
-        logger.error(f"Autentikasi gagal: {e}")
-        raise
-    else:
-        return client
+    return TelegramClient("anon", api_id=int(api_id), api_hash=api_hash)

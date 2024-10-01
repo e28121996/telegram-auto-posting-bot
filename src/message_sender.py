@@ -13,24 +13,55 @@ dan logging aktivitas pengiriman pesan.
 """
 
 import asyncio
-import secrets
+import secrets  # Ganti random dengan secrets
 import time
+from typing import Any
+from typing import Dict
 from typing import List
+from typing import Optional
 from typing import Tuple
+from typing import TypedDict
+from typing import Union
+from typing import cast
 
 from telethon import TelegramClient
 from telethon import errors
 
 from src.cache import cache
-from src.config import get_config
+from src.config import get_config_value
 from src.error_handler import handle_sending_error
 from src.group_manager import group_manager
 from src.logger import logger
 from src.message_manager import get_message_manager  # Tambahkan ini di bagian atas file
 
-# Tambahkan konstanta untuk jeda minimum dan maksimum antar pesan dalam batch
-MIN_INTRA_BATCH_DELAY = 1.0  # 1 detik
-MAX_INTRA_BATCH_DELAY = 3.0  # 3 detik
+
+class ConfigDict(TypedDict):
+    """Struktur konfigurasi untuk pengiriman pesan."""
+
+    message_sending: Dict[str, Any]
+
+
+config = get_config_value()
+logger.debug(f"Config returned: {config}")
+
+if not config:
+    error_message = "Konfigurasi kosong atau tidak valid"
+    logger.error(error_message)
+    raise ValueError(error_message)
+
+message_sending_config = config.get("message_sending", {})
+if not isinstance(message_sending_config, dict):
+    error_message = "Konfigurasi message_sending harus berupa dictionary"
+    logger.error(error_message)
+    raise TypeError(error_message)
+
+# Ganti konstanta ini dengan nilai dari konfigurasi
+MIN_INTRA_BATCH_DELAY = message_sending_config.get("min_intra_batch_delay", 1.0)
+MAX_INTRA_BATCH_DELAY = message_sending_config.get("max_intra_batch_delay", 3.0)
+BATCH_SIZE = message_sending_config.get("batch_size", 4)
+MIN_INTER_BATCH_DELAY = message_sending_config.get("min_inter_batch_delay", 20)
+MAX_INTER_BATCH_DELAY = message_sending_config.get("max_inter_batch_delay", 30)
+DEFAULT_MAX_LENGTH = message_sending_config.get("default_max_length", 4096)
 
 
 async def is_group_in_slow_mode(group: str) -> bool:
@@ -53,15 +84,15 @@ async def update_slow_mode_info(group: str, wait_seconds: int) -> None:
 
 async def get_available_groups(groups: List[str]) -> Tuple[List[str], int]:
     """Mendapatkan daftar grup yang tersedia untuk pengiriman pesan."""
-    available = []
-    skipped = 0
-    for group in groups:
-        if await group_manager.is_in_blacklist(group) or await is_group_in_slow_mode(
-            group
-        ):
-            skipped += 1
-        else:
-            available.append(group)
+    available = [
+        group
+        for group in groups
+        if not (
+            await group_manager.is_in_blacklist(group)
+            or await is_group_in_slow_mode(group)
+        )
+    ]
+    skipped = len(groups) - len(available)
     return available, skipped
 
 
@@ -106,7 +137,7 @@ async def send_message(client: TelegramClient, group: str, message: str) -> None
 async def send_mass_message(
     client: TelegramClient,
     groups: List[str],
-    _: str,
+    message: str,
 ) -> None:
     """Mengirim pesan ke beberapa grup Telegram."""
     available_groups, skipped_groups = await get_available_groups(groups)
@@ -120,24 +151,32 @@ async def send_mass_message(
             logger.info(f"Melewati {group}: Grup dalam daftar hitam")
         elif await group_manager.is_in_slow_mode(group):
             logger.info(f"Melewati {group}: Grup dalam mode lambat")
-
-    batch_size = 4  # Bisa disesuaikan berdasarkan performa
+            logger.info(f"Melewati {group}: Grup dalam mode lambat")
+    batch_size = BATCH_SIZE  # Bisa disesuaikan berdasarkan performa
     total_batches = (len(available_groups) - 1) // batch_size + 1
     message_manager = await get_message_manager()  # Tambahkan ini
     for i in range(0, len(available_groups), batch_size):
         batch = available_groups[i : i + batch_size]
         current_batch = i // batch_size + 1
         logger.info(f"Mengirim pesan ke batch {current_batch} dari {total_batches}")
-        tasks = [
-            send_message(client, group, message_manager.get_random_message())
-            for group in batch
-        ]
+        tasks = []
+        for group in batch:
+            if message_manager:
+                tasks.append(
+                    send_message(client, group, message_manager.get_random_message())
+                )
+            else:
+                logger.warning(
+                    f"MessageManager tidak tersedia untuk grup {group}. "
+                    "Menggunakan pesan default."
+                )
+                tasks.append(send_message(client, group, message))
         results = await asyncio.gather(*tasks, return_exceptions=True)
         success_count = sum(
             1 for result in results if not isinstance(result, Exception)
         )
         logger.info(
-            f"Batch {current_batch} selesai. " f"Berhasil: {success_count}/{len(batch)}"
+            f"Batch {current_batch} selesai. Berhasil: {success_count}/{len(batch)}"
         )
 
         batch_delay = secrets.randbelow(11) + 20  # 20-30 detik
@@ -153,17 +192,19 @@ async def send_mass_message(
 def get_float_config(key: str, default: float) -> float:
     """Mengambil nilai konfigurasi float berdasarkan kunci yang diberikan.
 
-    Fungsi ini mengambil nilai konfigurasi dari fungsi get_config dan
-    mengonversinya menjadi float. Jika nilai tidak dapat dikonversi,
-    nilai default akan dikembalikan.
-
     Args:
-        key (str): Kunci konfigurasi yang ingin diambil.
-        default (float): Nilai default yang akan dikembalikan jika konfigurasi
-                         tidak ditemukan atau tidak dapat dikonversi ke float.
+        key (str): Kunci konfigurasi yang akan diambil nilainya.
+        default (float): Nilai default yang akan dikembalikan jika kunci tidak
+            ditemukan.
 
     Returns:
-        float: Nilai konfigurasi yang dikonversi ke float atau nilai default.
+        float: Nilai konfigurasi yang sesuai dengan kunci, atau nilai default jika
+            tidak ditemukan.
     """
-    value = get_config(key, default)
-    return float(value) if isinstance(value, (int, float, str)) else default
+    value: Optional[Any] = get_config_value(key)
+    if value is None:
+        return default
+    try:
+        return float(cast(Union[float, str], value))
+    except ValueError:
+        return default
