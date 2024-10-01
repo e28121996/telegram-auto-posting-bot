@@ -1,93 +1,93 @@
-# Bot Auto-Posting Telegram
+# Bot Auto-Posting Telegram Pribadi
 
-Proyek ini adalah bot Telegram otomatis yang dirancang untuk mengirim pesan ke beberapa grup Telegram secara efisien dan aman, dengan mematuhi batasan dan aturan platform untuk menghindari penandaan sebagai spam.
+Bot ini adalah alat otomatis pribadi untuk mengirim pesan ke berbagai grup Telegram secara terjadwal.
 
-**CATATAN PENTING: Proyek ini ditujukan untuk penggunaan pribadi dan terbatas. Harap gunakan dengan bertanggung jawab dan sesuai dengan Ketentuan Layanan Telegram.**
+## Fitur Utama
 
-## Fitur
+- Pengiriman pesan otomatis ke beberapa grup Telegram
+- Penjadwalan pengiriman pesan dengan interval yang dapat dikonfigurasi
+- Manajemen grup termasuk daftar hitam dan penanganan mode lambat (slow mode)
+- Caching untuk meningkatkan kinerja
+- Penanganan kesalahan dan notifikasi
+- Konfigurasi yang fleksibel melalui file YAML dan variabel lingkungan
+- Profiling untuk analisis kinerja
 
-- Struktur modular untuk pemeliharaan dan integrasi fitur yang mudah
-- Manajemen konfigurasi menggunakan Pydantic v2 dan YAML
-- Autentikasi menggunakan akun Telegram pribadi
-- Pengiriman pesan terjadwal dengan interval acak
-- Pengiriman pesan massal dengan jeda acak
-- Manajemen pesan dengan caching untuk meningkatkan kinerja
-- Manajemen grup dengan fungsi blacklist
-- Penanganan error yang komprehensif dengan notifikasi ke chat pribadi
-- Sistem caching untuk mengoptimalkan kinerja
-- Logging detail dengan rotasi dan manajemen log
-- Operasi asinkron menggunakan asyncio
+## Persyaratan
 
-## Persiapan
+- Python 3.7+
+- Telethon
+- PyYAML
+- python-dotenv
+- Pydantic
 
-1. Klon repositori:
-   ```
-   git clone https://github.com/e28121996/telegram-auto-posting-bot.git
-   cd telegram-auto-posting-bot
-   ```
+## Pengaturan
 
-2. Buat dan aktifkan lingkungan virtual:
-   ```bash
-   # Buat lingkungan virtual
-   python -m venv venv
-
-   # Aktifkan lingkungan virtual
-   # Untuk Unix atau MacOS:
-   source venv/bin/activate
-
-   # Untuk Windows:
-   # Command Prompt:
-   venv\Scripts\activate.bat
-   # PowerShell:
-   venv\Scripts\Activate.ps1
-   ```
-
-   Catatan: Pastikan untuk menjalankan perintah yang sesuai dengan sistem operasi Anda.
-
-3. Instal dependensi yang diperlukan:
+1. Pastikan semua dependensi terinstal:
    ```
    pip install -r requirements.txt
    ```
 
-4. Buat file `.env` di direktori utama dan tambahkan kredensial API Telegram Anda:
+2. Buat file `.env` di direktori utama proyek dan isi dengan kredensial Telegram Anda:
    ```
-   API_ID=api_id_anda
-   API_HASH=api_hash_anda
-   PHONE_NUMBER=nomor_telepon_anda
-   PERSONAL_CHAT_ID=id_chat_pribadi_anda
+   API_ID=your_api_id
+   API_HASH=your_api_hash
+   PHONE_NUMBER=your_phone_number
+   PERSONAL_CHAT_ID=your_personal_chat_id
    ```
+   Ganti nilai-nilai tersebut dengan kredensial Telegram Anda yang sesuai.
 
-5. Konfigurasikan file `config.yaml` sesuai dengan pengaturan yang Anda inginkan.
-
-6. Siapkan folder `data/`:
-   - Baca `data/README.md` untuk instruksi detail.
-   - Buat file-file berikut berdasarkan contoh yang disediakan:
-     - `groups.txt` (lihat `groups.example.txt`)
-     - `blacklist.txt` (lihat `blacklist.example.txt`)
-     - `pesan1.txt`, `pesan2.txt`, dst. (lihat `pesan1.example.txt`)
+3. Edit `config.yaml` sesuai kebutuhan Anda.
 
 ## Penggunaan
 
-Jalankan bot menggunakan:
+1. Pastikan semua konfigurasi sudah benar di file `.env` dan `config.yaml`.
 
-```
-python main.py
-```
+2. Jalankan bot dengan perintah:
+   ```
+   python main.py
+   ```
 
-## Dokumentasi Teknis
+3. Bot akan mulai berjalan dan mengirim pesan sesuai jadwal yang telah dikonfigurasi.
 
-Untuk informasi lebih detail tentang arsitektur, modul, dan fungsi-fungsi utama, silakan lihat [Dokumentasi Teknis](DOCUMENTATION.md).
+## Struktur Proyek
 
-## Keamanan dan Privasi
+- `main.py`: Skrip utama untuk menjalankan bot
+- `src/`: Direktori berisi modul-modul utama bot
+- `config.yaml`: File konfigurasi utama
+- `.env`: File untuk menyimpan kredensial dan konfigurasi sensitif
+- `data/`: Direktori untuk menyimpan data seperti daftar grup dan pesan
+- `logs/`: Direktori untuk file log
 
-- File-file dalam folder `data/` mengandung informasi sensitif dan tidak di-upload ke repositori.
-- Pastikan untuk tidak membagikan atau meng-commit file-file dalam `data/` ke repositori publik.
-- Selalu periksa `.gitignore` untuk memastikan file-file sensitif tidak akan di-track oleh Git.
+## Konfigurasi
 
-## Peringatan
+Lihat `config.yaml` untuk opsi konfigurasi yang tersedia. Kredensial sensitif disimpan di file `.env`.
 
-Bot ini menggunakan akun Telegram pribadi dan ditujukan untuk penggunaan pribadi atau terbatas. Penggunaan yang tidak bertanggung jawab dapat melanggar Ketentuan Layanan Telegram. Gunakan dengan bijak dan atas risiko Anda sendiri.
+## Penanganan Kesalahan dan Logging
+
+Bot dilengkapi dengan sistem logging. Cek file `logs/bot.log` untuk informasi detail tentang operasi bot dan `logs/bot.log.error` untuk log kesalahan. Kesalahan kritis akan dikirimkan ke chat pribadi yang ditentukan di `PERSONAL_CHAT_ID`.
+
+## Fitur Tambahan
+
+- **Slow Mode Maintenance**: Bot secara otomatis membersihkan informasi slow mode dan menyimpan statistiknya setiap jam.
+- **Dynamic Scheduling**: Interval pengiriman pesan disesuaikan secara dinamis berdasarkan tingkat keberhasilan dan kegagalan.
+- **Profiling**: Bot menggunakan cProfile untuk menganalisis kinerja dan mencatat hasil profiling di log.
+
+## Catatan Penting
+
+Bot ini dirancang untuk penggunaan pribadi. Pastikan untuk mematuhi Ketentuan Layanan Telegram dan tidak menggunakan bot untuk spam atau aktivitas yang melanggar aturan.
+
+## Pemecahan Masalah
+
+Jika mengalami masalah saat menjalankan bot, periksa file log untuk informasi lebih lanjut atau lihat bagian Pemecahan Masalah di [DOCUMENTATION.md](DOCUMENTATION.md).
+
+## Dokumentasi
+
+Untuk informasi lebih lanjut tentang cara kerja bot dan detail implementasi, lihat [DOCUMENTATION.md](DOCUMENTATION.md).
 
 ## Lisensi
 
-[Lisensi MIT](LICENSE)
+[MIT License](LICENSE)
+
+## Pemecahan Masalah
+
+Jika Anda mengalami masalah saat menjalankan bot, silakan periksa bagian Pemecahan Masalah di [DOCUMENTATION.md](DOCUMENTATION.md) untuk panduan lebih lanjut.

@@ -2,6 +2,7 @@
 __pycache__/
 *.py[cod]
 *$py.class
+*.pyc
 
 # Lingkungan virtual
 venv/
@@ -29,11 +30,11 @@ session.session
 # config.yaml
 
 # Abaikan isi folder data
-data/*
-# Tetapi simpan README dan file contoh
-!data/README.md
-!data/*.example.txt
+# data/*
 
 # File yang dihasilkan oleh sistem operasi
 .DS_Store
 Thumbs.db
+
+# Folder Ruff cache
+.ruff_cache/

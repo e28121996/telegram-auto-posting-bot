@@ -1,72 +1,30 @@
 [tool.ruff]
-# Mengatur versi Python target
-target-version = "py38"
-
-# Mengatur panjang baris maksimum sesuai dengan Black
+fix = true
 line-length = 88
+target-version = "py38"
+exclude = ["tests/*", "docs/*", "examples/*"]
 
-# Mengaktifkan semua aturan yang relevan dengan proyek ini
-select = [
-    "E",   # Kesalahan pycodestyle
-    "W",   # Peringatan pycodestyle
-    "F",   # pyflakes
-    "I",   # isort
-    "C",   # flake8-comprehensions
-    "B",   # flake8-bugbear
-    "S",   # flake8-bandit (keamanan)
-    "ANN", # flake8-annotations
-    "N",   # pep8-naming
-    "D",   # pydocstyle
-    "UP",  # pyupgrade
-    "RUF", # Aturan khusus Ruff
-    "PT",  # flake8-pytest-style
-    "SIM", # flake8-simplify
-    "TCH", # flake8-type-checking
-    "ARG", # flake8-unused-arguments
-    "ERA", # eradicate
-]
+[tool.ruff.lint]
+select = ["ALL"]
+ignore = ["COM812", "ISC001"]
+unfixable = []
+per-file-ignores = {"__init__.py" = ["E402", "F401"]}
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
 
-# Mengabaikan beberapa aturan yang mungkin terlalu ketat untuk proyek ini
-ignore = [
-    "D203",  # 1 baris kosong diperlukan sebelum docstring kelas
-    "D212",  # Ringkasan docstring multi-baris harus dimulai pada baris pertama
-    "ANN101",  # Anotasi tipe yang hilang untuk self dalam metode
-    "ANN102",  # Anotasi tipe yang hilang untuk cls dalam classmethod
-]
-
-# Mengabaikan beberapa aturan untuk file tertentu
-[tool.ruff.per-file-ignores]
-"__init__.py" = ["F401"]  # Mengizinkan impor yang tidak digunakan di __init__.py
-"tests/*" = ["S101"]  # Mengizinkan penggunaan assert dalam tes
-
-# Konfigurasi untuk pydocstyle
-[tool.ruff.pydocstyle]
+[tool.ruff.lint.pydocstyle]
 convention = "google"
 
-# Konfigurasi untuk flake8-annotations
-[tool.ruff.flake8-annotations]
-allow-star-arg-any = true
+[tool.ruff.lint.isort]
+force-single-line = true
 
-# Konfigurasi untuk isort
-[tool.ruff.isort]
-known-third-party = ["telethon", "pydantic", "asyncio"]
-
-# Konfigurasi untuk formatter Ruff
 [tool.ruff.format]
 quote-style = "double"
 indent-style = "space"
 skip-magic-trailing-comma = false
-line-ending = "auto"
+line-ending = "lf"
 
-# Konfigurasi untuk flake8-bugbear
-[tool.ruff.flake8-bugbear]
-extend-immutable-calls = ["pydantic.Field"]
-
-# Konfigurasi untuk pyupgrade
-[tool.ruff.pyupgrade]
-# Menggunakan sintaks walrus operator (Python 3.8+)
+[tool.ruff.lint.pyupgrade]
 keep-runtime-typing = true
 
-# Konfigurasi untuk flake8-bandit (keamanan)
-[tool.ruff.flake8-bandit]
-hardcoded-tmp-directory = ["tmp", "temp"]
+[tool.pyright]
+typeCheckingMode = "basic"

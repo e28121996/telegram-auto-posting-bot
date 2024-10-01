@@ -1,2 +1,0 @@
-@spam_group
-@blocked_group
